@@ -54,7 +54,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         }
         QMap<QString, QString> map;
         int item = 0;
-        // #,Assignee,Tracker,Status,Subject,Target version,Estimated time,% Done,Description
+        // #,Assignee,Tracker,Status,Subject,Target version,Priority,% Done,Description
         map["id"] = list.at(item++);
         map["assignee"] = list.at(item++);
         map["tracker"] = list.at(item++);
@@ -69,11 +69,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         }
         map["subject"] = specialTrim(map["subject"]);
         map["target"] = specialTrim(list.at(item++));
-        map["estimatedTime"] = specialTrim(list.at(item++));
-        if (!map["estimatedTime"].isEmpty()) { // Remove .0 to hour and replace it with "h".
-                map["estimatedTime"] = map["estimatedTime"].split(".").at(0);
-                map["estimatedTime"].append("h");
-        }
+        map["priority"] = specialTrim(list.at(item++));
         map["done"] = list.at(item++);
         QString description;
         for (int ii = item; ii < list.count(); ++ii) {
@@ -102,7 +98,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
 //        qDebug() << map["tracker"];// = list.at(2);
 //        qDebug() << map["status"];// = list.at(3);
 //        qDebug() << map["subject"];// = list.at(4);
-//        qDebug() << map["estimatedTime"];// = list.at(5);
+//        qDebug() << map["priority"];// = list.at(5);
 //        qDebug() << map["done"];//  = list.at(6)
 //        qDebug() << map["description"];
 //        qDebug() << "-----\n";
@@ -111,7 +107,12 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
             continue;
         }
 
-        if (!param["type"].contains(map["tracker"].left(1), Qt::CaseInsensitive)){
+        if ( !param["type"].contains(map["tracker"].left(1), Qt::CaseInsensitive))
+        {
+            continue;
+        }
+
+        if (!param["id"].isEmpty() && param["id"].compare(map["id"]) != 0) {
             continue;
         }
         QImage* fiche = createFiche(map);
@@ -136,8 +137,6 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     painterPrint.end();
     delete pageImage;
     qDebug() << "Done";
-   // pageImage->save("test2.jpg");
-
 }
 
 QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
@@ -160,6 +159,20 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     painter.setBrush(Qt::white);
     painter.drawRect(0,0, m_widthPixel - 1, m_heightPixel - 1);
 
+    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0) {
+        // First write background "Urgent"
+        font = QFont("Arial", 200);
+        painter.setFont(font);
+        painter.setPen(Qt::lightGray);
+        painter.save();
+        painter.translate(20, 300);
+        painter.rotate(60);
+        painter.drawText(0, 0, "Urgent");
+        painter.setPen(Qt::red);
+        painter.restore();
+        painter.setPen(Qt::black);
+    }
+
     // Draw header
     if (map["tracker"].contains("Technical", Qt::CaseInsensitive)) {
         painter.setBrush(QColor::fromRgb(100,205,255));
@@ -181,11 +194,19 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     painter.setFont(font);
     painter.drawText(20, 40, map["tracker"]);
 
-    // - Draw estimeted time
+    // - Draw Priority (in the header)
 
-    if (!map["estimatedTime"].trimmed().isEmpty()) {
-            fm = QFontMetrics(font);
-            painter.drawText(m_widthPixel -20 - fm.width(map["estimatedTime"]), 40,  map["estimatedTime"]);
+    if (!map["priority"].trimmed().isEmpty()) {
+        if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0 ||
+             map["priority"].compare("High", Qt::CaseInsensitive) == 0) {
+            painter.setPen(Qt::red);
+        } else if  (map["priority"].compare("Low", Qt::CaseInsensitive) == 0) {
+            painter.setPen(Qt::blue);
+        }
+        fm = QFontMetrics(font);
+        painter.drawText(m_widthPixel -20 - fm.width(map["priority"]), 40,  map["priority"]);
+        // Reset the pen to black
+        painter.setPen(Qt::black);
     }
 
     // - Draw assignee
@@ -208,28 +229,43 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     // Draw title
     font = QFont("Arial", 30);
     font.setBold(true);
+    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0 ||
+         map["priority"].compare("High", Qt::CaseInsensitive) == 0) {
+        painter.setPen(Qt::red);
+    } else if  (map["priority"].compare("Low", Qt::CaseInsensitive) == 0) {
+        painter.setPen(Qt::blue);
+    }
     painter.setFont(font);
     QRect* boundingBox = new QRect;
     painter.drawText(QRect(10, headerHeight + 20, m_widthPixel - 20, 300), Qt::TextWordWrap | Qt::AlignHCenter , map["subject"], boundingBox);
     int subjectHeight =  boundingBox->height();
     delete boundingBox;
     font.setBold(false);
+    // Reset the pen to black
+    painter.setPen(Qt::black);
 
     // Draw description
+    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0) {
+        painter.setPen(Qt::red);
+    }
+
     if (map["description"].count() < 1000){
         font = QFont("Arial", 26);
     } else {
         font = QFont("Arial", 20);
     }
+
     painter.setFont(font);
     painter.drawText(QRect(20, headerHeight + 40 + subjectHeight, m_widthPixel - 40, m_heightPixel - (headerHeight + 30 + subjectHeight) - bottomHeight), map["description"]);
+    // Reset the pen to black
+    painter.setPen(Qt::black);
 
     // Draw bottom
     painter.setBrush(Qt::white);
     font = QFont("Arial", 20);
     painter.setFont(font);
     fm = QFontMetrics(font);
-    painter.drawRect(0, m_heightPixel - bottomHeight, m_widthPixel, bottomHeight);
+    painter.drawRect(0, m_heightPixel - bottomHeight, m_widthPixel - 1, bottomHeight - 1);
     painter.drawText(m_widthPixel - fm.width(map["target"]) - 20, m_heightPixel - 20, map["target"]);
     painter.end();
 

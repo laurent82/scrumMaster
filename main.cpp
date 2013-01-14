@@ -4,10 +4,11 @@
 #include "ScrumMaker.h"
 
 void showHelp() {
-    qDebug() << "How to use:\nscrumMaster [-t psutc , -u userName] fileFromRedmin.csv [outputFile.pdf]";
+    qDebug() << "How to use:\nscrumMaster [-t psutc , -u userName, -id idNumber] fileFromRedmin.csv [outputFile.pdf]";
     qDebug() << "-t : choose types to generate (default: all):";
     qDebug() << "\tp Problem report\n\tc Change request\n\ts Scenario\n\tu User story\n\tt Technical Story";
     qDebug() << "-u : choose user";
+    qDebug() << "-id : choose id number (generate only one card)";
     qDebug() << "Example: ";
     qDebug() << "scrumMaster -t ut -u Engels fileFromRedmin.csv output.pdf";
     exit(0);
@@ -39,6 +40,12 @@ int main(int argc, char *argv[])
                 } else {
                     showHelp();
                 }
+            } else if(str.compare("-id") == 0) {
+                if (++i < argc) {
+                    param["id"] = argv[i];
+                } else {
+                    showHelp();
+                }
             } else if (str.contains(".csv")) {
                 param["input"] = str;
             } else if (str.contains(".pdf")) {
@@ -53,6 +60,5 @@ int main(int argc, char *argv[])
             ScrumMaker* maker = new ScrumMaker(param);
         }
     }
-
     return a.exec();
 }
