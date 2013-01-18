@@ -28,6 +28,10 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         qDebug() << "File can not be read. Abort.";
         exit(0);
     }
+    QList<QString> idToPrint;
+    if (!param["id"].isEmpty()) {
+        idToPrint = param["id"].split(",");
+    }
     int pageWidth = (int)(11.69*300);
     int pageHeight = (int)(8.27*300);
     QImage* pageImage = new QImage(pageWidth, pageHeight, QImage::Format_RGB32); // 20x28.5 (A4)
@@ -109,10 +113,12 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
 
         if ( !param["type"].contains(map["tracker"].left(1), Qt::CaseInsensitive))
         {
+            // Special for safety
+            if (map["tracker"].contains("Safety", Qt::CaseInsensitive))
             continue;
         }
 
-        if (!param["id"].isEmpty() && param["id"].compare(map["id"]) != 0) {
+        if (idToPrint.count() > 0 && !idToPrint.contains(map["id"])) {
             continue;
         }
         QImage* fiche = createFiche(map);
@@ -184,6 +190,8 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
         painter.setBrush(QColor::fromRgb(255, 155, 155));
     } else if (map["tracker"].contains("Change", Qt::CaseInsensitive)) {
         painter.setBrush(QColor::fromRgb(255, 175, 0));
+    } else if (map["tracker"].contains("Safety", Qt::CaseInsensitive)) {
+        painter.setBrush(QColor::fromRgb(220, 90, 255));
     } else {
         painter.setBrush(QColor::fromRgb(200, 200, 200));
     }
