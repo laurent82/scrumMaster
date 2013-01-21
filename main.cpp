@@ -8,9 +8,9 @@ void showHelp() {
     qDebug() << "-t : choose types to generate (default: all):";
     qDebug() << "\tp Problem report\n\tc Change request\n\ts Scenario\n\tu User story\n\tt Technical Story";
     qDebug() << "-u : choose user";
-    qDebug() << "-id : choose id number (generate only one card)";
+    qDebug() << "-id : choose id number, seperated by a comma (generate only the selected cards)";
     qDebug() << "Example: ";
-    qDebug() << "scrumMaster -t ut -u Engels fileFromRedmin.csv output.pdf";
+    qDebug() << "scrumMaster -t ut -u Engels -id 1234,1235 fileFromRedmin.csv output.pdf";
     exit(0);
 }
 

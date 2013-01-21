@@ -7,7 +7,7 @@ Using Qt4.
 How to use:
 For the moment only working with the following csv file:
 
-#,Assignee,Tracker,Status,Subject,Target version,Estimated time,% Done,Description
+id,Assignee,Tracker,Status,Subject,Target version,Priority,% Done,Description
 
 In Redmine, choose "Current iteration", then export to CSV (bottom right).
 Thick current selection and description.
