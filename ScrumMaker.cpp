@@ -7,10 +7,33 @@
 #include <QFont>
 #include <QPrinter>
 #include <QMap>
+#include <iostream>
 ScrumMaker::ScrumMaker(QMap<QString, QString> param)
 {
     makeScrumBoard(param);
     exit(0);
+}
+
+void ScrumMaker::showProgressBar(int percent)
+{
+    char percentBar[23];
+    percentBar[22] = '\0';
+    percentBar[21] = '|';
+    percentBar[0] = '|';
+    bool first = true;
+    for (int i = 1; i < 21; ++i) {
+        if (5*i <= percent || percent >= 95) {
+            percentBar[i] = '=';
+        } else {
+            if (first) {
+                percentBar[i] = '>';
+                first = false;
+            } else {
+                percentBar[i] = '.';
+            }
+        }
+    }
+    std::cout << "\r" << percentBar;
 }
 
 void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
@@ -18,6 +41,9 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     m_widthPixel = (int)(300 * 2.36);
     m_heightPixel = (int)(300 * 3.87);
     QFile file(param["input"]);
+
+
+
 
     qDebug() << "Opening " << file.fileName() << "...";
     if (!file.exists()) {
@@ -28,6 +54,15 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         qDebug() << "File can not be read. Abort.";
         exit(0);
     }
+
+    // Count line (only for showing the percent)
+    int nbrOfLines = 0;
+    while(!file.atEnd()) {
+        file.readLine();
+        ++nbrOfLines;
+    }
+    file.seek(0);
+    // End of countline
     QList<QString> idToPrint;
     if (!param["id"].isEmpty()) {
         idToPrint = param["id"].split(",");
@@ -48,7 +83,10 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     printer.setPaperSize(QPrinter::A4);
     printer.setOrientation(QPrinter::Landscape);
     QPainter painterPrint(&printer);
+
+    int currentLine = 1;
     while (!file.atEnd()) {
+        showProgressBar(int(currentLine++/(float)nbrOfLines *100));
         data = file.readLine();
         data.replace(QString("\"\""), QString(""));
         data.replace(QString("\\E9"), QChar(233)); // é
@@ -90,6 +128,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
             number = isNumber(buff, sizeof(buff));
             if (!number) {
                 data = file.readLine();
+                ++currentLine;
                 description.append(data);
             }
         } while(!file.atEnd() && !number);
@@ -136,13 +175,15 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
                     printer.newPage();
                 }
             }
-        }
-        painterPrint.drawImage(QPoint(0, 0), *pageImage);
+        }       
     }
+    painterPrint.drawImage(QPoint(0, 0), *pageImage);
     painter.end();
     painterPrint.end();
     delete pageImage;
-    qDebug() << "Done";
+    showProgressBar(100);
+    std::cout << std::endl;
+    std::cout << "Done" << std::endl;
 }
 
 QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
