@@ -40,6 +40,8 @@ int main(int argc, char *argv[])
                 } else {
                     showHelp();
                 }
+            } else if(str.compare("-v") == 0) {
+                param["verbose"] = "true";
             } else if(str.compare("-id") == 0) {
                 if (++i < argc) {
                     param["id"] = argv[i];

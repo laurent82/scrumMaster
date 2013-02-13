@@ -43,8 +43,6 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     QFile file(param["input"]);
 
 
-
-
     qDebug() << "Opening " << file.fileName() << "...";
     if (!file.exists()) {
         qDebug() << "File does not exist. Abort";
@@ -84,19 +82,20 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     printer.setOrientation(QPrinter::Landscape);
     QPainter painterPrint(&printer);
 
-    int currentLine = 1;
+    int currentLine = 1; // For the progress bar.
     while (!file.atEnd()) {
         showProgressBar(int(currentLine++/(float)nbrOfLines *100));
         data = file.readLine();
         data.replace(QString("\"\""), QString(""));
         data.replace(QString("\\E9"), QChar(233)); // é
-        QStringList list = data.split(",");
+        data = replaceComma(data);
+        QStringList list = data.split(";");
         if (list.count() < 7) {
             continue;
         }
         QMap<QString, QString> map;
         int item = 0;
-        // #,Assignee,Tracker,Status,Subject,Target version,Priority,% Done,Description
+        // #,Assignee,Tracker,Status,Subject,Target version,Priority,% Done, Related issues,Description
         map["id"] = list.at(item++);
         map["assignee"] = list.at(item++);
         map["tracker"] = list.at(item++);
@@ -113,6 +112,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         map["target"] = specialTrim(list.at(item++));
         map["priority"] = specialTrim(list.at(item++));
         map["done"] = list.at(item++);
+        map["related"] = list.at(item++);
         QString description;
         for (int ii = item; ii < list.count(); ++ii) {
             description.append(list.at(ii));
@@ -135,17 +135,18 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         map["description"] = specialTrim(description.trimmed());
         }
 
-//        if (map["id"].contains("1783")) {
-//        qDebug() << map["id"];//  = list.at(0);
-//        qDebug() << map["assignee"];// = list.at(1);
-//        qDebug() << map["tracker"];// = list.at(2);
-//        qDebug() << map["status"];// = list.at(3);
-//        qDebug() << map["subject"];// = list.at(4);
-//        qDebug() << map["priority"];// = list.at(5);
-//        qDebug() << map["done"];//  = list.at(6)
-//        qDebug() << map["description"];
-//        qDebug() << "-----\n";
-//        }
+        if (!param["verbose"].isNull()) {
+            qDebug() << map["id"];//  = list.at(0);
+            qDebug() << map["assignee"];// = list.at(1);
+            qDebug() << map["tracker"];// = list.at(2);
+            qDebug() << map["status"];// = list.at(3);
+            qDebug() << map["subject"];// = list.at(4);
+            qDebug() << map["priority"];// = list.at(5);
+            qDebug() << map["done"];//  = list.at(6)
+            qDebug() << map["description"];
+            qDebug() << "-----\n";
+        }
+
         if (!param["user"].isEmpty() && !map["assignee"].contains(param["user"], Qt::CaseInsensitive)){
             continue;
         }
@@ -167,11 +168,14 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
             i = 0;
             ++j;
             if ((j + 1)*m_heightPixel > pageHeight) {
+                // Page is full
+                // Flush the painter into the PDF (painterPrint)
                 i = 0;
                 j = 0;
                 painterPrint.drawImage(QPoint(0, 0), *pageImage);
-                pageImage->fill(Qt::white);
+                pageImage->fill(Qt::white); // Erase the current page image
                 if (!file.atEnd()) {
+                    // If not the end of the file, create a new page into the PDF.
                     printer.newPage();
                 }
             }
@@ -184,6 +188,25 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
     showProgressBar(100);
     std::cout << std::endl;
     std::cout << "Done" << std::endl;
+}
+
+QString ScrumMaker::replaceComma(QString string)
+{
+    bool replaceMode = true;
+    for (int i = 0; i < string.count(); ++i) {
+        if (replaceMode) {
+            if (string[i] == ',') {
+                string[i] = ';';
+            } else if (string[i] == '"') {
+                replaceMode = false;
+            }
+        } else {
+            if (string[i] == '"') {
+                replaceMode = true;
+            }
+        }
+    }
+    return string;
 }
 
 QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
@@ -245,18 +268,18 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
 
     // - Draw Priority (in the header)
 
-    if (!map["priority"].trimmed().isEmpty()) {
-        if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0 ||
-             map["priority"].compare("High", Qt::CaseInsensitive) == 0) {
-            painter.setPen(Qt::red);
-        } else if  (map["priority"].compare("Low", Qt::CaseInsensitive) == 0) {
-            painter.setPen(Qt::blue);
-        }
-        fm = QFontMetrics(font);
-        painter.drawText(m_widthPixel -20 - fm.width(map["priority"]), 40,  map["priority"]);
-        // Reset the pen to black
-        painter.setPen(Qt::black);
-    }
+//    if (!map["priority"].trimmed().isEmpty()) {
+//        if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0 ||
+//             map["priority"].compare("High", Qt::CaseInsensitive) == 0) {
+//            painter.setPen(Qt::red);
+//        } else if  (map["priority"].compare("Low", Qt::CaseInsensitive) == 0) {
+//            painter.setPen(Qt::blue);
+//        }
+//        fm = QFontMetrics(font);
+//        painter.drawText(m_widthPixel -20 - fm.width(map["priority"]), 40,  map["priority"]);
+//        // Reset the pen to black
+//        painter.setPen(Qt::black);
+//    }
 
     // - Draw assignee
 
@@ -315,7 +338,59 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     painter.setFont(font);
     fm = QFontMetrics(font);
     painter.drawRect(0, m_heightPixel - bottomHeight, m_widthPixel - 1, bottomHeight - 1);
-    painter.drawText(m_widthPixel - fm.width(map["target"]) - 20, m_heightPixel - 20, map["target"]);
+    // - Draw related issues:
+    QString strBlocks = QString("");
+    QString strRelated = QString("");
+    QString strBlockedBy = QString("");
+    int cptBlockedBy = 0;
+    int cptBlocks = 0;
+    int cptRelated = 0;
+    QStringList list = map["related"].split(",");
+    foreach (QString element, list) {
+        if (element.contains("Blocks")) {
+            // Extract task id
+            if (cptBlocks++ < 5) {
+                QString strId = element.mid(element.lastIndexOf("#") + 1);
+                if (!strBlocks.isEmpty()) {
+                    strBlocks.append(", ");
+                }
+                strBlocks.append(strId.replace("\"", ""));
+            }
+        } else if (element.contains("Related")) {
+            if (cptRelated++ < 3) {
+                QString strId = element.mid(element.lastIndexOf("#") + 1);
+                if (!strRelated.isEmpty()) {
+                    strRelated.append(", ");
+                }
+                strRelated.append(strId.replace("\"", ""));
+            }
+        } else if (element.contains("Blocked")) {
+            if (cptBlockedBy++ < 5) {
+                QString strId = element.mid(element.lastIndexOf("#") + 1);
+                if (!strBlockedBy.isEmpty()) {
+                    strBlockedBy.append(", ");
+                }
+                strBlockedBy.append(strId.replace("\"", ""));
+            }
+        }
+    }
+
+    if (!strRelated.isEmpty()) {
+        strRelated.prepend("R: ");
+    }
+
+    if (!strBlocks.isEmpty()) {
+        strBlocks.prepend(QString("%1: ").arg(QChar(9650)));
+    }
+    if (!strBlockedBy.isEmpty()) {
+        strBlockedBy.prepend(QString("%1: ").arg(QChar(9660)));
+    }
+    painter.drawText(m_widthPixel -20 - fm.width(strBlocks), 40,  strBlocks);
+    painter.drawText(10 , m_heightPixel - 45, strBlockedBy);
+    painter.drawText(m_widthPixel -20 - fm.width(strRelated), m_heightPixel - 45, strRelated);
+
+    // - Draw target version
+    painter.drawText(m_widthPixel - fm.width(map["target"]) - 20, m_heightPixel - 15, map["target"]);
     painter.end();
 
     return pixmap;
@@ -348,4 +423,5 @@ QString ScrumMaker::specialTrim(QString string)
         return string;
     }
 }
+
 
