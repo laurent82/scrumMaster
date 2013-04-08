@@ -245,17 +245,19 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
 
     // Draw header
     if (map["tracker"].contains("Technical", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(100,205,255));
+        painter.setBrush(QColor::fromRgb(100,205,255));     // Cyan
     } else if (map["tracker"].contains("User", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(255, 255, 175));
+        painter.setBrush(QColor::fromRgb(255, 255, 175));   // Yellow (light)
     } else if (map["tracker"].contains("Scenario", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(95, 255, 60));
+        painter.setBrush(QColor::fromRgb(95, 255, 60));     // Green
     } else if (map["tracker"].contains("Problem", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(255, 155, 155));
+        painter.setBrush(QColor::fromRgb(255, 155, 155));   // Red (light)
     } else if (map["tracker"].contains("Change", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(255, 175, 0));
+        painter.setBrush(QColor::fromRgb(255, 175, 0));     // Orange
     } else if (map["tracker"].contains("Safety", Qt::CaseInsensitive)) {
-        painter.setBrush(QColor::fromRgb(220, 90, 255));
+        painter.setBrush(QColor::fromRgb(220, 90, 255));    // Purple
+    } else if (map["tracker"].contains("Filing", Qt::CaseInsensitive)) {
+        painter.setBrush(QColor::fromRgb(128, 255, 215));    // Turquoise
     } else {
         painter.setBrush(QColor::fromRgb(200, 200, 200));
     }

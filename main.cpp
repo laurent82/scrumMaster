@@ -6,7 +6,7 @@
 void showHelp() {
     qDebug() << "How to use:\nscrumMaster [-t psutc , -u userName, -id idNumber] fileFromRedmin.csv [outputFile.pdf]";
     qDebug() << "-t : choose types to generate (default: all):";
-    qDebug() << "\tp Problem report\n\tc Change request\n\ts Scenario\n\tu User story\n\tt Technical Story";
+    qDebug() << "\tp Problem report\n\tc Change request\n\ts Scenario\n\tu User story\n\tt Technical Story\tf Filling Document";
     qDebug() << "-u : choose user";
     qDebug() << "-id : choose id number, seperated by a comma (generate only the selected cards)";
     qDebug() << "Example: ";

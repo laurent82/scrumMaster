@@ -7,7 +7,7 @@
 QT       += core
 
 TARGET = scrumMaster
-#CONFIG   += console
+CONFIG   += console
 #CONFIG   -= app_bundle
 
 TEMPLATE = app
