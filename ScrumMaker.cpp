@@ -111,6 +111,7 @@ void ScrumMaker::makeScrumBoard(QMap<QString, QString> param)
         map["subject"] = specialTrim(map["subject"]);
         map["target"] = specialTrim(list.at(item++));
         map["priority"] = specialTrim(list.at(item++));
+        map["importance"] = specialTrim(list.at(item++));
         map["done"] = list.at(item++);
         map["related"] = list.at(item++);
         QString description;
@@ -229,15 +230,15 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     painter.setBrush(Qt::white);
     painter.drawRect(0,0, m_widthPixel - 1, m_heightPixel - 1);
 
-    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0) {
-        // First write background "Urgent"
-        font = QFont("Arial", 200);
+    if ( map["priority"].compare("Safety", Qt::CaseInsensitive) == 0) {
+        // First write background "Safety"
+        font = QFont("Arial", 160);
         painter.setFont(font);
         painter.setPen(Qt::lightGray);
         painter.save();
         painter.translate(20, 300);
         painter.rotate(60);
-        painter.drawText(0, 0, "Urgent");
+        painter.drawText(0, 0, "Safety");
         painter.setPen(Qt::red);
         painter.restore();
         painter.setPen(Qt::black);
@@ -303,11 +304,13 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     // Draw title
     font = QFont("Arial", 30);
     font.setBold(true);
-    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0 ||
-         map["priority"].compare("High", Qt::CaseInsensitive) == 0) {
+    if ( map["priority"].compare("Safety", Qt::CaseInsensitive) == 0 ||
+         map["priority"].compare("Blocker", Qt::CaseInsensitive) == 0) {
         painter.setPen(Qt::red);
-    } else if  (map["priority"].compare("Low", Qt::CaseInsensitive) == 0) {
+    } else if  (map["priority"].compare("Minor", Qt::CaseInsensitive) == 0) {
         painter.setPen(Qt::blue);
+    } else if  (map["priority"].compare("Cosmetic", Qt::CaseInsensitive) == 0) {
+        painter.setPen(Qt::darkGreen);
     }
     painter.setFont(font);
     QRect* boundingBox = new QRect;
@@ -319,7 +322,7 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
     painter.setPen(Qt::black);
 
     // Draw description
-    if ( map["priority"].compare("Urgent", Qt::CaseInsensitive) == 0) {
+    if ( map["priority"].compare("Safety", Qt::CaseInsensitive) == 0) {
         painter.setPen(Qt::red);
     }
 
@@ -393,6 +396,10 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
 
     // - Draw target version
     painter.drawText(m_widthPixel - fm.width(map["target"]) - 20, m_heightPixel - 15, map["target"]);
+
+    // - Draw importance
+    painter.drawText(20, m_heightPixel - 15, map["importance"]);
+
     painter.end();
 
     return pixmap;
