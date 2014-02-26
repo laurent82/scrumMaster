@@ -391,14 +391,14 @@ QImage *ScrumMaker::createFiche(QMap<QString, QString> map)
         strBlockedBy.prepend(QString("%1: ").arg(QChar(9660)));
     }
     painter.drawText(m_widthPixel -20 - fm.width(strBlocks), 40,  strBlocks);
-    painter.drawText(10 , m_heightPixel - 45, strBlockedBy);
+    painter.drawText(10 , m_heightPixel - 13, strBlockedBy);
     painter.drawText(m_widthPixel -20 - fm.width(strRelated), m_heightPixel - 45, strRelated);
 
     // - Draw target version
     painter.drawText(m_widthPixel - fm.width(map["target"]) - 20, m_heightPixel - 15, map["target"]);
 
     // - Draw importance
-    painter.drawText(20, m_heightPixel - 15, map["importance"]);
+    painter.drawText(10, m_heightPixel - 45, map["importance"]);
 
     painter.end();
 
